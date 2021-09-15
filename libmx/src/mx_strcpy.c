@@ -1,7 +1,12 @@
 #include "libmx.h"
 
 char *mx_strcpy(char *dst, const char *src) {
-    for (int i = 0; (dst[i] = src[i]) != '\0'; i++);
+    int i = 0;
+
+    while (src[i]) {
+        dst[i] = src[i];
+        i++;
+    }
+    dst[i] = '\0';
     return dst;
 }
-

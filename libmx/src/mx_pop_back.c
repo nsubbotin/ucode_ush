@@ -3,17 +3,17 @@
 void mx_pop_back(t_list **head) {
     t_list *temp = NULL;
 
-    if (head && *head && (*head)->next) {
+    if (head == NULL || *head == NULL)
+        return;
+    if ((*head)->next == NULL) {
+        free(*head);
+        *head = NULL;
+    }
+    else {
         temp = *head;
-
-        while (temp->next->next)
+        while (temp && temp->next->next != NULL)
             temp = temp->next;
         free(temp->next);
         temp->next = NULL;
     }
-    else if (head && *head) {
-        free(*head);
-        *head = NULL;
-    }
 }
-

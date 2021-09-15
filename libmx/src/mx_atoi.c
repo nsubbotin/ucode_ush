@@ -1,23 +1,24 @@
 #include "libmx.h"
 
 int mx_atoi(const char *str) {
-	int sign;
-	int output;
+    const int MIN_INTS = -2147483648;
+    int sign = 1;
+    int num = 0;
+    int i = 0;
 
-	sign = 1;
-	output = 0;
-	while (mx_isspace(*str))
-		str++;
-	if (*str == '-'){
-		sign = -1;
-		str++;
-	}
-	else if (*str == '+')
-		str++;
-	while (mx_isdigit(*str)){
-		output = output * 10 + *str - '0';
-		str++;
-	}
-	return (output * sign);
+    while (mx_isspace(str[i]))
+        i++;
+    if (str[i] == '+' || str[i] == '-') {
+        if (str[i] == '-')
+            sign = -1;
+        i++;
+    }
+    while (mx_isdigit(str[i])) {
+        if (sign == -1 && num == 214748364 && str[i] == 8 + '0')
+            return MIN_INTS;
+        num *= 10;
+        num += str[i] - '0';
+        i++;
+    }
+    return num * sign;
 }
-

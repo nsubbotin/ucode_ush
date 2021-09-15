@@ -1,10 +1,11 @@
 #include "libmx.h"
 
 int mx_strlen(const char *s) {
-    int len = 0;
-
-    while(*s++)
-        len++;
-    return len;
+    int i = 0;
+    
+    if (!s)
+        return 0;
+    while (s[i])
+        i++;
+    return i;
 }
-

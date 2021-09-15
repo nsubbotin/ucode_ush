@@ -1,48 +1,66 @@
-NAME	=	ush
+NAME = ush
 
-CFLG	=	-std=c11 $(addprefix -W, all extra error pedantic) -g
 
-SRC_DIR	= src
-INC_DIR	= inc
-OBJ_DIR	= obj
+SRC_DIR = src/
+OBJ_DIR = obj/
+INC_DIR = inc/
 
-INC_FILES = $(wildcard $(INC_DIR)/*.h)
-SRC_FILES = $(wildcard $(SRC_DIR)/*.c)
-OBJ_FILES = $(addprefix $(OBJ_DIR)/, $(notdir $(SRC_FILES:%.c=%.o)))
 
-LMX_DIR	= libmx
-LMX_A:=	$(LMX_DIR)/libmx.a
-LMX_INC:= $(LMX_DIR)/inc
+DIRS	= $(notdir $(wildcard $(SRC_DIR)*))
+FILES	= $(foreach dir, $(DIRS), $(basename $(wildcard $(SRC_DIR)$(dir)/*.c)))
+SRC		= $(FILES:%=%.c)
+OBJ		= $(SRC:src/%.c=$(OBJ_DIR)%.o)
+INC_H	= $(wildcard $(INC_DIR)*.h)
 
-all: install
 
-install: $(LMX_A) $(NAME)
+LIB_DIR	 = .
+LIB_LIST = libmx
+LIB_DIRS = $(foreach libdirs, $(LIB_LIST), $(LIB_DIR)/$(libdirs)/)
+LIB_BIN	 = $(join $(LIB_DIRS), $(addsuffix .a, $(LIB_LIST)))
+LIB_INC	 = $(addsuffix $(INC_DIR), $(LIB_DIRS))
 
-$(NAME): $(OBJ_FILES)
-	@clang $(CFLG) $(OBJ_FILES) -L$(LMX_DIR) -lmx -o $@
+
+CC		 = clang
+GFLAGS		= -std=c11 -Wall -Wextra -Werror -Wpedantic\
+			  -Wno-unused-command-line-argument -Wno-unused-variable \
+			  -Wno-unused-function -Wno-unused-parameter -g
+IFLAGS	 = $(addprefix -I, $(LIB_INC) $(INC_DIR))
+COMPILE	 = $(CC) $(GFLAGS) $(IFLAGS) $(LIB_BIN)
+
+
+MAKE_M	 = make -sf Makefile -C
+MKDIR	 = mkdir -p
+RM		 = /bin/rm -rf
+
+
+all: $(NAME)
+
+$(NAME): $(LIB_LIST) $(OBJ_DIR) $(OBJ)
+	@$(COMPILE) $(OBJ) -lmx -o $(NAME) -ltermcap
 	@printf "\r\33[2K$@ \033[32;1mcreated\033[0m\n"
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(INC_FILES)
-	@clang $(CFLG) -c $< -o $@ -I$(INC_DIR) -I$(LMX_INC)
-	@printf "\r\33[2K$(NAME) \033[33;1mcompile \033[0m$(<:$(SRC_DIR)/%.c=%) "
+$(LIB_BIN): $(LIB_LIST)
 
-$(OBJ_FILES): | $(OBJ_DIR)
+$(LIB_LIST): $(LIB_DIRS)
+	@$(MAKE_M) $(LIB_DIR)/$@
 
 $(OBJ_DIR):
-	@mkdir -p $@
+	@$(MKDIR) $@ $(foreach dir, $(DIRS), $@/$(dir))
 
-$(LMX_A):
-	@make -sC $(LMX_DIR)
-	
+$(OBJ_DIR)%.o: $(SRC_DIR)%.c $(INC_H) $(LIB_BIN)
+	@$(COMPILE) -o $@ -c $<
+	@printf "\r\33[2K$(NAME) \033[33;1mcompile \033[0m$(<:$(SRC_DIR)/%.c=%)"
+
 clean:
-	@rm -rf $(OBJ_DIR)
-	@make clean -sC $(LMX_DIR)
-	@printf "$(OBJ_DIR) in $(NAME) \033[31;1mdeleted\033[0m\n"
+	@$(MAKE_M) $(LIB_DIR)/$(LIB_LIST) $@
+	@$(RM) $(OBJ_DIR)
+	@printf "obj in $(NAME)\t \033[31;1mdeleted\033[0m\n"
 
 uninstall:
-	@make -sC $(LMX_DIR) $@
-	@rm -rf $(OBJ_DIR)
-	@rm -rf $(NAME)
-	@printf "$(NAME) \033[31;1muninstalled\033[0m\n"
+	@$(MAKE_M) $(LIB_DIR)/$(LIB_LIST) $@
+	@$(RM) $(OBJ_DIR) $(NAME)
+	@printf "$(NAME)\t \033[31;1muninstalled\033[0m\n"
 
 reinstall: uninstall all
+
+.PHONY: all clean uninstall reinstall $(LIB_LIST)

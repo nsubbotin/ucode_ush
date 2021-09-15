@@ -1,30 +1,35 @@
 #include "libmx.h"
 
-static char *check_zero(char *str_num) {
-    str_num = mx_strnew(1);
-    str_num[0] = '0';
-    return str_num;
+static int get_len_number(int number) {
+    int len = 0;
+
+    for (int i = number; i != 0; i /= 10) 
+        len++;
+    if (number <= 0)
+        len++;
+
+    return len;
 }
 
 char *mx_itoa(int number) {
-    char *str_num = NULL;
-    short size = 0;
-    long l = number;
+    int len = 0;
+    int sign = 1;
+    char *mitoa = NULL; 
 
-    if (number < 0) {
-        size++;
-        l *= -1;
+    len = get_len_number(number);
+    mitoa = mx_strnew(len);   
+    if (number == 0)
+        mitoa[0] = '0';
+    else {
+        if (number < 0) 
+            sign = -1;
+        for (int i = len - 1; i >= 0; i--) {
+            mitoa[i] = (number % 10) * sign + '0';
+            number /= 10;
+        }
+        if (sign == -1) 
+            mitoa[0] = '-';
     }
-    if (number == 0) 
-        return check_zero(str_num);
-    for (long a = l; a > 0; a /= 10, size++);
-    str_num = mx_strnew(size);
-    if (number < 0)
-        str_num[0] = '-';
-    for ( ; l > 0; size-- ) {
-        str_num [size - 1] = l % 10  + '0';
-        l /= 10;
-    }
-    return str_num;
+    mitoa[len] = '\0';
+    return mitoa;
 }
-

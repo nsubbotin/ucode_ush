@@ -1,24 +1,38 @@
 #include "libmx.h"
 
-char *mx_replace_substr(const char *str, const char *sub, const char *replace){
-    int diff;
-    char *res;
+static void get_all_lengths(int *len_s, int *len_r, char *sub, char *replace) {
+    *len_s = mx_strlen(sub);
+    *len_r = mx_strlen(replace);
+}
 
-    if (!str || !sub || !replace)
+static void not_sub_case(const char **s, const char **sub, char **buf) {
+    if (*s != mx_strstr(*s, *sub)) {
+        **buf = **s;
+        (*buf)++;
+        (*s)++;
+    }
+}
+
+char *mx_replace_substr(const char *str, const char *sub,
+                        const char *replace) {
+    char *buf1 = NULL;
+    char *buf2 = NULL;
+    const char *s = str;
+    int len_s = 0;
+    int len_r = 0;
+
+    if ((!str) || (!sub) || (!replace))
         return NULL;
-    diff = mx_strlen(sub) - mx_strlen(replace);
-    diff = diff < 0 ? -diff : diff;
-    res = mx_strnew(mx_strlen(str) + mx_count_substr(str, sub) * diff);
-    for (int i = 0, k = 0; i < mx_strlen(str); i++) {
-        if (!mx_get_substr_index(&str[i], sub)) {
-            for (int j = 0; j < mx_strlen(replace); j++, k++)
-                res[k] = replace[j];
-            i += mx_strlen(sub) - 1;
-        }
-        else {
-            res[k] = str[i];
-            k++;
+    get_all_lengths(&len_s, &len_r, (char*)sub, (char*)replace);
+    buf1 = mx_strnew(mx_strlen(s) + (len_r - len_s) * mx_count_substr(s, sub));
+    buf2 = buf1;
+    while (*s) {
+        not_sub_case(&s, &sub, &buf2);
+        if (s == mx_strstr(s, sub)) {
+            buf2 = mx_strcat(buf2, replace);
+            buf2 += len_r;
+            s += len_s;
         }
     }
-    return res;
+    return buf1;
 }
